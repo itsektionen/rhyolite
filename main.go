@@ -3,24 +3,13 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-var RhyoliteDir string
-
 func main() {
-	address := os.Getenv("RHYOLITE_WEB_ADDR")
-	if address == "" {
-		log.Panicln("No RHYOLITE_WEB_ADDR specified")
-	}
-
-	RhyoliteDir = os.Getenv("RHYOLITE_ROOT_DIR")
-	if RhyoliteDir == "" {
-		log.Panicln("No RHYOLITE_ROOT_DIR specified")
-	}
+	LoadConfig()
 
 	watchForFileChanges()
 	defer closeWatchForFileChanges()
@@ -33,6 +22,6 @@ func main() {
 
 	r.Post("/v1/{path}/{token}", handleExecuteRequest)
 
-	log.Println("Starting on address:", address)
-	http.ListenAndServe(address, r)
+	log.Println("Starting on address:", config.WebAddress)
+	http.ListenAndServe(config.WebAddress, r)
 }

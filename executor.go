@@ -9,12 +9,12 @@ import (
 	"time"
 )
 
-func execute(config CommandConfig, request ExecuteRequest) ([]byte, error) {
+func execute(cmdConfig CommandConfig, request ExecuteRequest) ([]byte, error) {
 	maxTime := time.Second * 120
 	ctx, cancel := context.WithTimeout(context.Background(), maxTime)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", "-c", config.Command)
-	cmd.Dir = filepath.Join(RhyoliteDir, request.directory)
+	cmd := exec.CommandContext(ctx, "bash", "-c", cmdConfig.Command)
+	cmd.Dir = filepath.Join(config.RockDir, request.directory)
 	output := bytes.Buffer{}
 	cmd.Stdout = &output
 	cmd.Stderr = &output

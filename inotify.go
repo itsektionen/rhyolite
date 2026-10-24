@@ -23,38 +23,44 @@ func watchForFileChanges() {
 		log.Fatalf("Could not create watcher: %s", err.Error())
 	}
 
-	err = watchAllRocksInFolder(RhyoliteDir)
+	err = watchAllRocksInFolder(config.RockDir)
 	if err != nil {
 		log.Fatalf("Failed to watch rocks: %s", err.Error())
 	}
 
-	go rockRootWatcherHandle()
-	go rockWatcherHandle()
+	go watcherHandle(rockConfigWatcher, rockContentsChanged)
+	go watcherHandle(rockRootConfigWatcher, rockRootChanged)
 }
 
-func rockRootWatcherHandle() {
+func watcherHandle(w *fsnotify.Watcher, callback func(fsnotify.Event)) {
 	for {
 		select {
-		case event, ok := <-rockRootConfigWatcher.Events:
+		case event, ok := <-rockConfigWatcher.Events:
 			if !ok {
 				return
 			}
-			if event.Has(fsnotify.Create) {
-				if err := watchRock(event.Name); err != nil {
-					log.Println("Error watching rock: ", err.Error())
-				}
+			if event.Op.Has(fsnotify.Create) || event.Op.Has(fsnotify.Write) || event.Op.Has(fsnotify.Remove) {
+				callback(event)
 			}
+		case err, ok := <-rockConfigWatcher.Errors:
+			if !ok {
+				return
+			}
+			log.Println("Rock Watcher error:", err.Error())
+		}
+	}
+}
 
-			if event.Has(fsnotify.Remove) {
-				if err := refreshPath(event.Name); err != nil {
-					log.Println("Error on rock removal: ", err.Error())
-				}
-			}
-		case err, ok := <-rockRootConfigWatcher.Errors:
-			if !ok {
-				return
-			}
-			log.Println("Rock Root Watcher error:", err.Error())
+func rockRootChanged(event fsnotify.Event) {
+	if event.Has(fsnotify.Create) {
+		if err := watchRock(event.Name); err != nil {
+			log.Println("Error watching rock: ", err.Error())
+		}
+	}
+
+	if event.Has(fsnotify.Remove) {
+		if err := refreshPath(event.Name); err != nil {
+			log.Println("Error on rock removal: ", err.Error())
 		}
 	}
 }
@@ -67,7 +73,7 @@ func watchAllRocksInFolder(directory string) error {
 	errors := ""
 	for _, entry := range entries {
 		if entry.IsDir() {
-			fullPath := filepath.Join(RhyoliteDir, entry.Name())
+			fullPath := config.joinRockDir(entry.Name())
 			if err := watchRock(fullPath); err != nil {
 				errors += err.Error()
 			}
@@ -81,13 +87,11 @@ func watchAllRocksInFolder(directory string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to watch root dir: %w", err)
 	}
-	println("Watching: " + directory)
 
 	return nil
 }
 
 func watchRock(directory string) error {
-	println("Watching rock:", directory)
 	err := refreshPath(directory)
 	if err != nil {
 		return err
@@ -96,38 +100,19 @@ func watchRock(directory string) error {
 	return nil
 }
 func refreshPath(directory string) error {
-	delta, err := filepath.Rel(RhyoliteDir, directory)
+	delta, err := filepath.Rel(config.RockDir, directory)
 	if err != nil {
 		return fmt.Errorf("Failed to parse relative path: %w", err)
 	}
-	err = reloadPath(delta)
+	err = reloadRock(delta)
 	if err != nil {
-		fmt.Println("Rock config error: %w", err)
+		log.Println("Rock config error:", err.Error())
 	}
 	return nil
 }
 
-func rockWatcherHandle() {
-	for {
-		select {
-		case event, ok := <-rockConfigWatcher.Events:
-			if !ok {
-				return
-			}
-			if event.Op.Has(fsnotify.Create) || event.Op.Has(fsnotify.Write) || event.Op.Has(fsnotify.Remove) {
-				rockContentsChanged(event.Name)
-			}
-		case err, ok := <-rockConfigWatcher.Errors:
-			if !ok {
-				return
-			}
-			log.Println("Rock Root Watcher error:", err.Error())
-		}
-	}
-}
-
-func rockContentsChanged(fullPath string) {
-	directory, file := filepath.Split(fullPath)
+func rockContentsChanged(event fsnotify.Event) {
+	directory, file := filepath.Split(event.Name)
 	if file != ".rhyolite.yaml" {
 		return
 	}
@@ -135,6 +120,7 @@ func rockContentsChanged(fullPath string) {
 }
 
 func closeWatchForFileChanges() {
-	println("Closing the config watcher")
+	log.Println("Closing the rock watchers")
 	rockConfigWatcher.Close()
+	rockRootConfigWatcher.Close()
 }

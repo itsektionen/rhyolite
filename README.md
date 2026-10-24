@@ -8,3 +8,5 @@ Each rock has a `.rhyolite.yaml` which defines which commands can be executed, a
 
 It takes post requests to /v1/{path}/{token}, where path is the folder where the config for the Rock is.  
 The token specifies the command to run, as well as authorizing it, as defined in the `.rhyolite.yaml`
+
+The main configuration file is located at `/etc/rhyolite/config.yaml`

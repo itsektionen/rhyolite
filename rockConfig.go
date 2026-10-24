@@ -16,7 +16,7 @@ type CommandConfig struct {
 }
 
 type RockConfig struct {
-	Commands []CommandConfig `yaml:"commands"`
+	Commands map[string]CommandConfig `yaml:"commands"`
 }
 
 type RockConfigs struct {
@@ -60,19 +60,22 @@ func findCommandConfig(request ExecuteRequest) (CommandConfig, error) {
 	pathConfigs.mutex.RLock()
 	defer pathConfigs.mutex.RUnlock()
 
-	pathConfig, ok := pathConfigs.configs[request.directory]
+	pathConfig, ok := pathConfigs.configs[request.rock]
 	if !ok {
 		return CommandConfig{}, fmt.Errorf("No config found with name")
 	}
 
-	for _, cmd := range pathConfig.Commands {
-		requestToken := []byte(request.token)
-		configToken := []byte(cmd.Token)
-
-		if subtle.ConstantTimeCompare(requestToken, configToken) == 1 {
-			return cmd, nil
-		}
+	cmd, ok := pathConfig.Commands[request.commandName]
+	if !ok {
+		return CommandConfig{}, fmt.Errorf("No command found with name")
 	}
 
-	return CommandConfig{}, fmt.Errorf("No command matching the provided token was found")
+	requestToken := []byte(request.token)
+	configToken := []byte(cmd.Token)
+
+	if subtle.ConstantTimeCompare(requestToken, configToken) != 1 {
+		return CommandConfig{}, fmt.Errorf("Invalid token for command")
+	}
+	return cmd, nil
+
 }

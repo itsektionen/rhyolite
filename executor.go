@@ -14,7 +14,7 @@ func execute(cmdConfig CommandConfig, request ExecuteRequest) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), maxTime)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", "-c", cmdConfig.Command)
-	cmd.Dir = filepath.Join(config.RockDir, request.directory)
+	cmd.Dir = filepath.Join(config.RockDir, request.rock)
 	output := bytes.Buffer{}
 	cmd.Stdout = &output
 	cmd.Stderr = &output

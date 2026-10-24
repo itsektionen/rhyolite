@@ -20,7 +20,7 @@ func main() {
 		w.Write([]byte("Rhyolite Server"))
 	})
 
-	r.Post("/v1/{path}/{token}", handleExecuteRequest)
+	r.Post("/v1/{path}/{name}/{token}", handleExecuteRequest)
 
 	log.Println("Starting on address:", config.WebAddress)
 	http.ListenAndServe(config.WebAddress, r)

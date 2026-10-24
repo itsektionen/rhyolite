@@ -1,7 +1,10 @@
 commands:
-  - token: update-detach-4
+  update-detach:
+    token: "123"
     command: "docker compose up -d"
-  - token: update-6
+  update:
+    token: "456"
     command: "docker compose up"
-  - token: down-8
+  down:
+    token: "789"
     command: "docker compose down"

@@ -22,13 +22,16 @@ func main() {
 		log.Panicln("No RHYOLITE_ROOT_DIR specified")
 	}
 
+	watchForFileChanges()
+	defer closeWatchForFileChanges()
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Rhyolite Server"))
 	})
 
-	r.Post("/v1/{path}", HandleExecuteRequest)
+	r.Post("/v1/{path}/{token}", handleExecuteRequest)
 
 	log.Println("Starting on address:", address)
 	http.ListenAndServe(address, r)

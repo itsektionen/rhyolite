@@ -12,39 +12,32 @@ type ExecuteRequest struct {
 	token     string
 }
 
-func HandleExecuteRequest(w http.ResponseWriter, r *http.Request) {
-	path_var := chi.URLParam(r, "path")
-	log.Println("Attempting to run: ", path_var)
-	token := r.Header.Get("X-Deploy-Token")
+func handleExecuteRequest(w http.ResponseWriter, r *http.Request) {
+	path := chi.URLParam(r, "path")
+	token := chi.URLParam(r, "token")
+	log.Println("Attempting to run: ", path)
 	request := ExecuteRequest{
-		directory: path_var,
+		directory: path,
 		token:     token,
 	}
-	err := VerifyRequest(request)
+	config, err := findCommandConfig(request)
 	if err != nil {
-		log.Println("Bad request: ", err.Error())
-		w.WriteHeader(402)
-		w.Write([]byte("Bad request, see the Rhyolite console for more info."))
-		return
-	}
-	config, err := ReadConfig(request)
-	if err != nil {
-		log.Println("Unable to execute request:", err.Error())
-		w.WriteHeader(403)
-		w.Write([]byte("Unauthorized request, see the Rhyolite console for more info."))
+		log.Println("Unable to find a matching command: %w", err)
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("Forbidden request, see the Rhyolite console for more info."))
 		return
 	}
 
-	output, err := Execute(config, request)
+	output, err := execute(config, request)
 	if err != nil {
-		log.Println("Unable to execute:", err.Error())
-		log.Println("Command history:\n", string(output))
-		w.WriteHeader(500)
-		w.Write([]byte("Server error, see the Rhyolite console for more info."))
+		log.Println("Unable to execute:%w", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Command failed:\n"))
+		w.Write(output)
 		return
 	}
 
-	log.Println("Command executed successfully, history:\n", string(output))
+	log.Println("Command executed successfully, history:\n%s", string(output))
 
-	w.Write([]byte("deployed"))
+	w.Write(output)
 }

@@ -2,6 +2,9 @@
 
 Rhyolite is a backend for server deployment.
 
-It takes post requests to /v1/{path}, and a header "X-Deploy-Token".
+Each folder with a deployable item(s) is called a "Rock".
 
-If the token matches that in $RHYOLITE_DIR_ROOT/rhyolite.yaml, then run the command in the yaml file.
+Each rock has a `.rhyolite.yaml` which defines which commands can be executed, and their tokens.
+
+It takes post requests to /v1/{path}/{token}, where path is the folder where the config for the Rock is.  
+The token specifies the command to run, as well as authorizing it, as defined in the `.rhyolite.yaml`

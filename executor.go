@@ -1,48 +1,26 @@
 package main
 
 import (
-	"crypto/subtle"
+	"bytes"
+	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
-
-	"go.yaml.in/yaml/v3"
+	"time"
 )
 
-type Config struct {
-	Token   string `yaml:"token"`
-	Command string `yaml:"command"`
-}
-
-func ReadConfig(request ExecuteRequest) (Config, error) {
-
-	config := Config{}
-
-	filepath := filepath.Join(RhyoliteDir, request.directory, "rhyolite.yaml")
-
-	data, err := os.ReadFile(filepath)
-	if err != nil {
-		return config, fmt.Errorf("Unable to read", filepath, err.Error())
-	}
-
-	err = yaml.Unmarshal(data, &config)
-	if err != nil {
-		return config, fmt.Errorf("Yaml unmarshal failed Data \"", data, "\" error:", err.Error())
-	}
-
-	requestToken := []byte(request.token)
-	configToken := []byte(config.Token)
-
-	if subtle.ConstantTimeCompare(requestToken, configToken) != 1 {
-		return config, fmt.Errorf("Invalid token")
-	}
-
-	return config, nil
-}
-
-func Execute(config Config, request ExecuteRequest) ([]byte, error) {
-	cmd := exec.Command("bash", "-c", config.Command)
+func execute(config CommandConfig, request ExecuteRequest) ([]byte, error) {
+	maxTime := time.Second * 120
+	ctx, cancel := context.WithTimeout(context.Background(), maxTime)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "bash", "-c", config.Command)
 	cmd.Dir = filepath.Join(RhyoliteDir, request.directory)
-	return cmd.Output()
+	output := bytes.Buffer{}
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+	if err := cmd.Run(); err != nil {
+		err = fmt.Errorf("Program exited with error:\n%s\n----\n[Internal error: %w]\n", output.String(), err)
+		return []byte(err.Error()), err
+	}
+	return []byte(output.String()), nil
 }

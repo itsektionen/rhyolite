@@ -1,0 +1,24 @@
+name: Rhyolite/Execute command V1
+description: Runs a rhyolite command
+
+on:
+  workflow_call:
+    inputs:
+      deploy-dir:
+        required: true
+        description: The folder where the .rhyolite.yaml is, i.e. `/home/deploy/<deploy-dir>/.rhyolite.yaml`
+        type: string
+      
+      command-name:
+        required: true
+        description: "The name of the command within the .rhyolite.yaml"
+        type: string
+
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute
+        run: curl -sS --max-time 300 -X POST https://rhyolite.kth.it/v1/${{inputs.deploy-dir}}/${{inputs.command-name}}/${{secrets.COMMAND_TOKEN}}
+      

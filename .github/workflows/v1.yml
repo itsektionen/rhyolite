@@ -23,5 +23,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Execute
-        run: "curl -sS --max-time 300 -X POST https://rhyolite.kth.it/v1/${{inputs.deploy-dir}}/${{inputs.command-name}}/${{secrets.RHYOLITE_TOKEN}} --header \"X-Github-Token: ${{ secrets.GITHUB_TOKEN }}\" --header: \"X-Github-Actor: ${{ github.actor }}\""
+        run: "curl -sS --max-time 300 -X POST https://rhyolite.kth.it/v1/${{inputs.deploy-dir}}/${{inputs.command-name}}/${{secrets.RHYOLITE_TOKEN}} --header \"X-Github-Token: ${{ secrets.GITHUB_TOKEN }}\" --header \"X-Github-Actor: ${{ github.actor }}\""
       

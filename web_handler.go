@@ -18,10 +18,11 @@ type ExecuteRequest struct {
 }
 
 var alphaNumericRegex = regexp.MustCompile("^[a-zA-Z0-9]+$")
+var githubTokenRegex = regexp.MustCompile("^gh[a-z]_[a-zA-Z0-9]+$")
 
 func (r *ExecuteRequest) validateGithubToken() error {
-	if !alphaNumericRegex.Match([]byte(r.githubToken)) {
-		return fmt.Errorf("Github token contains invalid characters")
+	if !githubTokenRegex.Match([]byte(r.githubToken)) {
+		return fmt.Errorf("Github token is invalid format")
 	}
 	return nil
 }

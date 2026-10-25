@@ -13,7 +13,12 @@ func execute(cmdConfig CommandConfig, request ExecuteRequest) ([]byte, error) {
 	maxTime := time.Second * 120
 	ctx, cancel := context.WithTimeout(context.Background(), maxTime)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", "-c", cmdConfig.Command)
+	command, err := cmdConfig.getBashCommand(request)
+	if err != nil {
+		err = fmt.Errorf("Cannot run program: %w", err)
+		return []byte(err.Error()), err
+	}
+	cmd := exec.CommandContext(ctx, "bash", "-c", command)
 	cmd.Dir = filepath.Join(config.RockDir, request.rock)
 	output := bytes.Buffer{}
 	cmd.Stdout = &output

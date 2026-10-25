@@ -11,8 +11,28 @@ import (
 )
 
 type CommandConfig struct {
-	Token   string `yaml:"token"`
-	Command string `yaml:"command"`
+	Token        string `yaml:"token"`
+	Command      string `yaml:"command"`
+	UseGhcrLogin bool   `yaml:"use-ghcr-login"`
+}
+
+func (c *CommandConfig) getBashCommand(request ExecuteRequest) (string, error) {
+	cmd := c.Command
+
+	if c.UseGhcrLogin {
+		if request.githubActor == "" || request.githubToken == "" {
+			return "", fmt.Errorf("This command requires both X-Github-Token and X-Github-Action")
+		}
+		if err := request.validateGithubActor(); err != nil {
+			return "", err
+		}
+		if err := request.validateGithubToken(); err != nil {
+			return "", err
+		}
+		cmd = "echo " + request.githubToken + " | docker login ghcr.io -u " + request.githubActor + " --password-stdin && " + cmd
+	}
+
+	return cmd, nil
 }
 
 type RockConfig struct {
@@ -39,6 +59,7 @@ func reloadRock(directory string) error {
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		delete(pathConfigs.configs, directory)
+		log.Println("No rock config found, removing reference to:", directory)
 		return nil // We silently fail if the file doesnt exist, this is intended.
 	}
 

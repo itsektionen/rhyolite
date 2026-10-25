@@ -19,7 +19,7 @@ on:
             
 
 jobs:
-  build-and-push:
+  execute-rhyolite-command:
     runs-on: ubuntu-latest
     steps:
       - name: Execute

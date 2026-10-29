@@ -11,9 +11,10 @@ import (
 )
 
 type CommandConfig struct {
-	Token        string `yaml:"token"`
-	Command      string `yaml:"command"`
-	UseGhcrLogin bool   `yaml:"use-ghcr-login"`
+	Token            string `yaml:"token"`
+	Command          string `yaml:"command"`
+	UseGhcrLogin     bool   `yaml:"use-ghcr-login"`
+	DontOverrideHome bool   `yaml:"dont-override-home"`
 }
 
 func (c *CommandConfig) getBashCommand(request ExecuteRequest) (string, error) {
@@ -29,7 +30,7 @@ func (c *CommandConfig) getBashCommand(request ExecuteRequest) (string, error) {
 		if err := request.validateGithubToken(); err != nil {
 			return "", err
 		}
-		cmd = "echo " + request.githubToken + " | docker login ghcr.io -u " + request.githubActor + " --password-stdin && " + cmd
+		cmd = "echo " + request.githubToken + " | docker login ghcr.io -u " + request.githubActor + " --password-stdin && " + cmd + " && docker logout ghcr.io"
 	}
 
 	return cmd, nil

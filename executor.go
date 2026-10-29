@@ -19,6 +19,10 @@ func execute(cmdConfig CommandConfig, request ExecuteRequest) ([]byte, error) {
 		return []byte(err.Error()), err
 	}
 	cmd := exec.CommandContext(ctx, "bash", "-c", command)
+	if !cmdConfig.DontOverrideHome {
+		// We override home to allow each execution to have its own docker login
+		cmd.Env = append(cmd.Environ(), "HOME="+filepath.Join(config.RockDir, request.rock))
+	}
 	cmd.Dir = filepath.Join(config.RockDir, request.rock)
 	output := bytes.Buffer{}
 	cmd.Stdout = &output

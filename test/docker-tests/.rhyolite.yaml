@@ -1,0 +1,11 @@
+commands:
+  update-detach:
+    token: "123"
+    command: "docker compose up -d"
+    use-ghcr-login: true
+  update:
+    token: "456"
+    command: "docker compose up"
+  down:
+    token: "789"
+    command: "docker compose down"

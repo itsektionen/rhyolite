@@ -1,0 +1,7 @@
+web_address: localhost:1225
+rock_dir: ./test
+cli:
+    rock_creator:
+        owner:
+            group_id: 1000
+            user_id: 1000

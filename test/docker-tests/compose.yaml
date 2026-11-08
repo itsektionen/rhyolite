@@ -1,0 +1,7 @@
+services:
+  docs:
+    image: ghcr.io/itsektionen/docs:main
+    ports:
+      - "8080:80"
+    pull_policy: always
+    restart: always

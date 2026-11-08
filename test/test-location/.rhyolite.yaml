@@ -1,0 +1,10 @@
+commands:
+  cat:
+    token: TestToken12345
+    command: "cat hi"
+  ls:
+    token: TestToken12345
+    command: "ls"
+  py:
+    token: TestToken12345
+    command: "python test.py"
